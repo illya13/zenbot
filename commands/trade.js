@@ -31,6 +31,7 @@ module.exports = function (program, conf) {
     .option('--avg_slippage_pct <pct>', 'avg. amount of slippage to apply to paper trades', Number, conf.avg_slippage_pct)
     .option('--buy_pct <pct>', 'buy with this % of currency balance', Number, conf.buy_pct)
     .option('--buy_max_amt <amt>', 'buy with up to this amount of currency balance', Number, conf.buy_max_amt)
+    .option('--sell_min_amt <amt>', 'sell with up to this amount of currency balance', Number, conf.sell_min_amt)
     .option('--sell_pct <pct>', 'sell with this % of asset balance', Number, conf.sell_pct)
     .option('--markdown_buy_pct <pct>', '% to mark down buy price', Number, conf.markdown_buy_pct)
     .option('--markup_sell_pct <pct>', '% to mark up sell price', Number, conf.markup_sell_pct)
