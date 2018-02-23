@@ -76,8 +76,8 @@ module.exports = {
           color = 'red'
         }
         cols.push(z(8, n(s.period.close).format('+00.0000'), ' ')[color])
-        cols.push(z(10, n(lowerBound).format('0.000000').substring(0,9), ' ').cyan)
-        cols.push(z(10, n(upperBound).format('0.000000').substring(0,9), ' ').cyan)
+        cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ').cyan)
+        cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ').cyan)
       }
     }
     else {
