@@ -65,16 +65,25 @@ module.exports = {
     if (s.in_preroll) return cb()
 
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
-      s.signal = null
+      // trend
+      let trend
       if (inBounds(s)) {
         if (s.last_hit_bollinger === 'upper' && s.period.close < s.last_hit_close) {
-          s.signal = 'sell'
+          trend = 'down'
         } else if (s.last_hit_bollinger === 'lower' && s.period.close > s.last_hit_close) {
-          s.signal = 'buy'
+          trend = 'up'
         }
         s.last_hit_bollinger = 'middle'
       }
       s.last_hit_close = s.period.close
+
+      // signal
+      s.signal = null
+      if (trend === 'down') {
+        s.signal = 'sell'
+      } else if (trend === 'up') {
+        s.signal = 'buy'
+      }
     }
     cb()
   },
