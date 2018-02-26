@@ -75,9 +75,8 @@ module.exports = {
         } else if (s.period.close < (lowerBound / 100) * (100 + s.options.bollinger_lower_bound_pct)) {
           color = 'red'
         }
-        cols.push(z(8, n(s.period.close).format('+00.0000'), ' ')[color])
-        cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ').cyan)
-        cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ').cyan)
+        cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
+        cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
       }
     }
     else {
