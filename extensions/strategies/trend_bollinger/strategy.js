@@ -81,14 +81,12 @@ module.exports = {
 
   onReport: function (s) {
     let cols = []
-    if (s.period.bollinger) {
-      if (s.period.bollinger.upper && s.period.bollinger.lower) {
-        let upperBound = getUpperBound(s)
-        let lowerBound = getLowerBound(s)
-        let color = getColor(s, upperBound, lowerBound)
-        cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
-        cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
-      }
+    if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
+      let upperBound = getUpperBound(s)
+      let lowerBound = getLowerBound(s)
+      let color = getColor(s, upperBound, lowerBound)
+      cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
+      cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
     }
     return cols
   }
