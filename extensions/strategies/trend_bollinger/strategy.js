@@ -1,6 +1,47 @@
-var z = require('zero-fill')
+let z = require('zero-fill')
   , n = require('numbro')
   , bollinger = require('../../../lib/bollinger')
+
+
+function getUpperBound(s) {
+  return s.period.bollinger.upper[s.period.bollinger.upper.length-1]
+}
+
+function isUpper(s, upperBound) {
+  return s.period.close > (upperBound / 100) * (100 - s.options.bollinger_upper_bound_pct)
+}
+
+function getLowerBound(s) {
+  return s.period.bollinger.lower[s.period.bollinger.lower.length-1]
+}
+
+function isLower(s, lowerBound) {
+  return s.period.close < (lowerBound / 100) * (100 + s.options.bollinger_lower_bound_pct)
+}
+
+function inBounds(s) {
+  let upperBound = getUpperBound(s)
+  let lowerBound = getLowerBound(s)
+  if (isUpper(s, upperBound)) {
+    s.last_hit_bollinger = 'upper'
+    return false
+  } else if (isLower(s, lowerBound)) {
+    s.last_hit_bollinger = 'lower'
+    return false
+  }
+  return true
+}
+
+function getColor(s, upperBound, lowerBound) {
+  if (isUpper(s, upperBound)) {
+    return 'green'
+  } else if (isLower(s, lowerBound)) {
+    return 'red'
+  } else {
+    return 'grey'
+  }
+}
+
 
 module.exports = {
   name: 'trend_bollinger',
@@ -17,72 +58,38 @@ module.exports = {
   },
 
   calculate: function (s) {
-    // calculate Bollinger Bands
     bollinger(s, 'bollinger', s.options.bollinger_size)
   },
 
   onPeriod: function (s, cb) {
-    if (!s.in_preroll && typeof s.period.oversold_rsi === 'number') {
-      if (s.oversold) {
-        s.oversold = false
-        s.trend = 'oversold'
-        s.signal = 'buy'
-        s.cancel_down = true
-        return cb()
-      }
-    }
+    if (s.in_preroll) return cb()
 
-    if (s.period.bollinger) {
-      if (s.period.bollinger.upper && s.period.bollinger.lower) {
-        s.signal = null // hold
-        let upperBound = s.period.bollinger.upper[s.period.bollinger.upper.length-1]
-        let lowerBound = s.period.bollinger.lower[s.period.bollinger.lower.length-1]
-        if (s.period.close > (upperBound / 100) * (100 - s.options.bollinger_upper_bound_pct)) {
-          s.last_hit_bollinger = 'upper'
-        } else if (s.period.close < (lowerBound / 100) * (100 + s.options.bollinger_lower_bound_pct)) {
-          s.last_hit_bollinger = 'lower'
-        } else {
-          if (s.last_hit_bollinger === 'upper' && s.period.close < s.last_hit_close) {
-            s.trend = 'down'
-          } else if (s.last_hit_bollinger === 'lower' && s.period.close > s.last_hit_close) {
-            s.trend = 'up'
-          }
-          s.last_hit_bollinger = 'middle'
-        }
-        s.last_hit_close = s.period.close
-
-        if (s.trend === 'down') {
+    if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
+      s.signal = null
+      if (inBounds(s)) {
+        if (s.last_hit_bollinger === 'upper' && s.period.close < s.last_hit_close) {
           s.signal = 'sell'
-          s.trend = null
-        } else if (s.trend === 'up') {
+        } else if (s.last_hit_bollinger === 'lower' && s.period.close > s.last_hit_close) {
           s.signal = 'buy'
-          s.trend = null
         }
+        s.last_hit_bollinger = 'middle'
       }
+      s.last_hit_close = s.period.close
     }
     cb()
   },
 
   onReport: function (s) {
-    var cols = []
+    let cols = []
     if (s.period.bollinger) {
       if (s.period.bollinger.upper && s.period.bollinger.lower) {
-        let upperBound = s.period.bollinger.upper[s.period.bollinger.upper.length-1]
-        let lowerBound = s.period.bollinger.lower[s.period.bollinger.lower.length-1]
-        var color = 'grey'
-        if (s.period.close > (upperBound / 100) * (100 - s.options.bollinger_upper_bound_pct)) {
-          color = 'green'
-        } else if (s.period.close < (lowerBound / 100) * (100 + s.options.bollinger_lower_bound_pct)) {
-          color = 'red'
-        }
+        let upperBound = getUpperBound(s)
+        let lowerBound = getLowerBound(s)
+        let color = getColor(s, upperBound, lowerBound)
         cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
         cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
       }
     }
-    else {
-      cols.push('         ')
-    }
     return cols
   }
 }
-
