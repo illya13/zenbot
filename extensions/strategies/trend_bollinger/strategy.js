@@ -19,6 +19,10 @@ function isLower(s, lowerBound) {
   return s.period.close < (lowerBound / 100) * (100 + s.options.bollinger_lower_bound_pct)
 }
 
+function getMiddle(s) {
+  return s.period.bollinger.mid[s.period.bollinger.upper.length-1]
+}
+
 function inBounds(s) {
   let upperBound = getUpperBound(s)
   let lowerBound = getLowerBound(s)
@@ -30,6 +34,10 @@ function inBounds(s) {
     return false
   }
   return true
+}
+
+function getBBW(s, upperBound, lowerBound) {
+  return (upperBound - lowerBound) / getMiddle(s)
 }
 
 function getColor(s, upperBound, lowerBound) {
@@ -93,6 +101,10 @@ module.exports = {
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
+
+      let bbw = getBBW(s, upperBound, lowerBound)
+      cols.push(z(5, n(bbw).format('0.000').substring(0,9), ' ').cyan)
+
       let color = getColor(s, upperBound, lowerBound)
       cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
       cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
