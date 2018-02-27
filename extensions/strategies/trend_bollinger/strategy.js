@@ -25,11 +25,19 @@ function getMiddle(s) {
   return s.period.bollinger.mid[s.period.bollinger.upper.length-1]
 }
 
+function isRSIUpper(s) {
+  return s.period.rsi > s.options.rsi_upper
+}
+
+function isRSILower(s) {
+  return s.period.rsi < s.options.rsi_lower
+}
+
 function inBounds(s, upperBound, lowerBound) {
-  if (isUpper(s, upperBound)) {
+  if (isUpper(s, upperBound) && isRSIUpper(s)) {
     s.last_hit_bollinger = 'upper'
     return false
-  } else if (isLower(s, lowerBound)) {
+  } else if (isLower(s, lowerBound) && isRSILower(s)) {
     s.last_hit_bollinger = 'lower'
     return false
   }
@@ -55,6 +63,36 @@ function getBBColor(s, upperBound, lowerBound) {
     return 'red'
   } else {
     return 'grey'
+  }
+}
+
+function getRSIColor(s) {
+  if (isRSIUpper(s)) {
+    return 'green'
+  } else if (isRSILower(s)) {
+    return 'red'
+  } else {
+    return 'grey'
+  }
+}
+
+function getBoundsColor(s, upperBound, lowerBound) {
+  if (isUpper(s, upperBound) && isRSIUpper(s)) {
+    return 'green'
+  } else if (isLower(s, lowerBound) && isRSILower(s)) {
+    return 'red'
+  } else {
+    return 'grey'
+  }
+}
+
+function getBoundsText(color) {
+  if (color === 'green') {
+    return '  up '
+  } else if (color === 'red') {
+    return ' low '
+  } else {
+    return ' mid '
   }
 }
 
@@ -98,6 +136,8 @@ module.exports = {
     this.option('bollinger_width_threshold', 'bollinger width threshold', Number, 0.07)
 
     this.option('rsi_periods', 'number of RSI periods', 14)
+    this.option('rsi_upper', 'RSI upper band', Number, 70)
+    this.option('rsi_lower', 'RSI lower band', Number, 30)
 
     this.option('ema_short_period', 'number of periods for the shorter EMA', Number, 12)
     this.option('ema_long_period', 'number of periods for the longer EMA', Number, 26)
@@ -162,7 +202,16 @@ module.exports = {
       color = getBBColor(s, upperBound, lowerBound)
       cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
       cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
+
+      if (typeof s.period.rsi === 'number') {
+        color = getRSIColor(s)
+        cols.push(z(3, n(s.period.rsi).format('0'), ' ')[color])
+
+        color = getBoundsColor(s, upperBound, lowerBound)
+        cols.push(getBoundsText(color)[color])
+      }
     }
+
     return cols
   }
 }
