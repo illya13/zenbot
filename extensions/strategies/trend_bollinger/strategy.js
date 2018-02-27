@@ -38,12 +38,15 @@ function getBBW(s, upperBound, lowerBound) {
   return (upperBound - lowerBound) / getMiddle(s)
 }
 
-function filteredByBBW(s, upperBound, lowerBound) {
-  let bbw = getBBW(s, upperBound, lowerBound)
+function filteredByBBW(s, bbw) {
   return bbw < s.options.bollinger_width_threshold
 }
 
-function getColor(s, upperBound, lowerBound) {
+function getBBWColor(s, bbw) {
+  return (filteredByBBW(s, bbw)) ? 'grey' : 'cyan'
+}
+
+function getBBColor(s, upperBound, lowerBound) {
   if (isUpper(s, upperBound)) {
     return 'green'
   } else if (isLower(s, lowerBound)) {
@@ -79,6 +82,7 @@ module.exports = {
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
+      let bbw = getBBW(s, upperBound, lowerBound)
 
       // trend
       let trend
@@ -94,7 +98,7 @@ module.exports = {
 
       // signal
       s.signal = null
-      if (!filteredByBBW(s, upperBound, lowerBound)) {
+      if (!filteredByBBW(s, bbw)) {
         if (trend === 'down') {
           s.signal = 'sell'
         } else if (trend === 'up') {
@@ -110,11 +114,12 @@ module.exports = {
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
-
       let bbw = getBBW(s, upperBound, lowerBound)
-      cols.push(z(5, n(bbw).format('0.000').substring(0,9), ' ').cyan)
 
-      let color = getColor(s, upperBound, lowerBound)
+      let color = getBBWColor(s, bbw)
+      cols.push(z(5, n(bbw).format('0.000').substring(0,9), ' ')[color])
+
+      color = getBBColor(s, upperBound, lowerBound)
       cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
       cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
     }
