@@ -23,9 +23,7 @@ function getMiddle(s) {
   return s.period.bollinger.mid[s.period.bollinger.upper.length-1]
 }
 
-function inBounds(s) {
-  let upperBound = getUpperBound(s)
-  let lowerBound = getLowerBound(s)
+function inBounds(s, upperBound, lowerBound) {
   if (isUpper(s, upperBound)) {
     s.last_hit_bollinger = 'upper'
     return false
@@ -38,6 +36,11 @@ function inBounds(s) {
 
 function getBBW(s, upperBound, lowerBound) {
   return (upperBound - lowerBound) / getMiddle(s)
+}
+
+function filteredByBBW(s, upperBound, lowerBound) {
+  let bbw = getBBW(s, upperBound, lowerBound)
+  return bbw < s.options.bollinger_width_threshold
 }
 
 function getColor(s, upperBound, lowerBound) {
@@ -63,6 +66,7 @@ module.exports = {
     this.option('bollinger_time', 'times of standard deviation between the upper band and the moving averages', Number, 2)
     this.option('bollinger_upper_bound_pct', 'pct the current price should be near the bollinger upper bound before we sell', Number, 0)
     this.option('bollinger_lower_bound_pct', 'pct the current price should be near the bollinger lower bound before we buy', Number, 0)
+    this.option('bollinger_width_threshold', 'bollinger width threshold', Number, 0.07)
   },
 
   calculate: function (s) {
@@ -73,9 +77,12 @@ module.exports = {
     if (s.in_preroll) return cb()
 
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
+      let upperBound = getUpperBound(s)
+      let lowerBound = getLowerBound(s)
+
       // trend
       let trend
-      if (inBounds(s)) {
+      if (inBounds(s, upperBound, lowerBound)) {
         if (s.last_hit_bollinger === 'upper' && s.period.close < s.last_hit_close) {
           trend = 'down'
         } else if (s.last_hit_bollinger === 'lower' && s.period.close > s.last_hit_close) {
@@ -87,10 +94,12 @@ module.exports = {
 
       // signal
       s.signal = null
-      if (trend === 'down') {
-        s.signal = 'sell'
-      } else if (trend === 'up') {
-        s.signal = 'buy'
+      if (!filteredByBBW(s, upperBound, lowerBound)) {
+        if (trend === 'down') {
+          s.signal = 'sell'
+        } else if (trend === 'up') {
+          s.signal = 'buy'
+        }
       }
     }
     cb()
