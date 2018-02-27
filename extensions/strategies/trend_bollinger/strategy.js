@@ -52,7 +52,7 @@ function bbw(s, upperBound, lowerBound) {
 }
 
 function filteredByBBW(s) {
-  return s.period.bollinger.hit < s.options.bollinger_width_threshold
+  return s.period.bollinger.bbw < s.options.bollinger_width_threshold
 }
 
 function getBBWColor(s) {
