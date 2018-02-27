@@ -33,15 +33,14 @@ function isRSILower(s) {
   return s.period.rsi < s.options.rsi_lower
 }
 
-function inBounds(s, upperBound, lowerBound) {
-  if (isUpper(s, upperBound) && isRSIUpper(s)) {
-    s.last_hit_bollinger = 'upper'
-    return false
-  } else if (isLower(s, lowerBound) && isRSILower(s)) {
-    s.last_hit_bollinger = 'lower'
-    return false
+function getHit(s, upperBound, lowerBound) {
+  if (isUpper(s, upperBound) && (isRSIUpper(s) || s.last_hit_bollinger === 'upper')) {
+    return 'upper'
+  } else if (isLower(s, lowerBound) && (isRSILower(s) || s.last_hit_bollinger === 'lower')) {
+    return 'lower'
+  } else {
+    return 'middle'
   }
-  return true
 }
 
 function getBBW(s, upperBound, lowerBound) {
@@ -76,23 +75,13 @@ function getRSIColor(s) {
   }
 }
 
-function getBoundsColor(s, upperBound, lowerBound) {
-  if (isUpper(s, upperBound) && isRSIUpper(s)) {
+function getBoundsColor(hit) {
+  if (hit === 'upper') {
     return 'green'
-  } else if (isLower(s, lowerBound) && isRSILower(s)) {
+  } else if (hit === 'lower') {
     return 'red'
   } else {
     return 'grey'
-  }
-}
-
-function getBoundsText(color) {
-  if (color === 'green') {
-    return '  up '
-  } else if (color === 'red') {
-    return ' low '
-  } else {
-    return ' mid '
   }
 }
 
@@ -160,13 +149,16 @@ module.exports = {
 
       // trend
       let trend
-      if (inBounds(s, upperBound, lowerBound)) {
+      let hit = getHit(s, upperBound, lowerBound)
+      if (hit === 'middle') {
         if (s.last_hit_bollinger === 'upper' && s.period.close < s.last_hit_close) {
           trend = 'down'
         } else if (s.last_hit_bollinger === 'lower' && s.period.close > s.last_hit_close) {
           trend = 'up'
         }
         s.last_hit_bollinger = 'middle'
+      } else {
+        s.last_hit_bollinger = hit
       }
       s.last_hit_close = s.period.close
 
@@ -207,8 +199,9 @@ module.exports = {
         color = getRSIColor(s)
         cols.push(z(3, n(s.period.rsi).format('0'), ' ')[color])
 
-        color = getBoundsColor(s, upperBound, lowerBound)
-        cols.push(getBoundsText(color)[color])
+        let hit = getHit(s, upperBound, lowerBound)
+        color = getBoundsColor(hit)
+        cols.push((' ' + hit.substring(0,3) + ' ')[color])
       }
     }
 
