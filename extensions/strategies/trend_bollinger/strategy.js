@@ -33,26 +33,30 @@ function isRSILower(s) {
   return s.period.rsi < s.options.rsi_lower
 }
 
-function getHit(s, upperBound, lowerBound) {
-  if (isUpper(s, upperBound) && (isRSIUpper(s) || s.last_hit_bollinger === 'upper')) {
-    return 'upper'
-  } else if (isLower(s, lowerBound) && (isRSILower(s) || s.last_hit_bollinger === 'lower')) {
-    return 'lower'
+function isLastHitEquals(s, hit) {
+  return s.lookback[0].bollinger && s.lookback[0].bollinger.hit && s.lookback[0].bollinger.hit === hit
+}
+
+function hitBollinger(s, upperBound, lowerBound) {
+  if (isUpper(s, upperBound) && (isRSIUpper(s) || isLastHitEquals(s, 'upper'))) {
+    s.period.bollinger.hit = 'upper'
+  } else if (isLower(s, lowerBound) && (isRSILower(s) || isLastHitEquals(s, 'lower'))) {
+    s.period.bollinger.hit = 'lower'
   } else {
-    return 'middle'
+    s.period.bollinger.hit = 'middle'
   }
 }
 
-function getBBW(s, upperBound, lowerBound) {
-  return (upperBound - lowerBound) / getMiddle(s)
+function bbw(s, upperBound, lowerBound) {
+  s.period.bollinger.bbw = (upperBound - lowerBound) / getMiddle(s)
 }
 
-function filteredByBBW(s, bbw) {
-  return bbw < s.options.bollinger_width_threshold
+function filteredByBBW(s) {
+  return s.period.bollinger.hit < s.options.bollinger_width_threshold
 }
 
-function getBBWColor(s, bbw) {
-  return (filteredByBBW(s, bbw)) ? 'grey' : 'cyan'
+function getBBWColor(s) {
+  return (filteredByBBW(s)) ? 'grey' : 'cyan'
 }
 
 function getBBColor(s, upperBound, lowerBound) {
@@ -75,10 +79,10 @@ function getRSIColor(s) {
   }
 }
 
-function getBoundsColor(hit) {
-  if (hit === 'upper') {
+function getHitColor(s) {
+  if (s.period.bollinger.hit === 'upper') {
     return 'green'
-  } else if (hit === 'lower') {
+  } else if (s.period.bollinger.hit === 'lower') {
     return 'red'
   } else {
     return 'grey'
@@ -135,6 +139,14 @@ module.exports = {
 
   calculate: function (s) {
     bollinger(s, 'bollinger', s.options.bollinger_size)
+
+    if (s.lookback.length > s.options.bollinger_size) {
+      let upperBound = getUpperBound(s)
+      let lowerBound = getLowerBound(s)
+      bbw(s, upperBound, lowerBound)
+      hitBollinger(s, upperBound, lowerBound)
+    }
+
     rsi(s, 'rsi', s.options.rsi_periods)
     macd(s)
   },
@@ -143,28 +155,19 @@ module.exports = {
     if (s.in_preroll) return cb()
 
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
-      let upperBound = getUpperBound(s)
-      let lowerBound = getLowerBound(s)
-      let bbw = getBBW(s, upperBound, lowerBound)
-
       // trend
       let trend
-      let hit = getHit(s, upperBound, lowerBound)
-      if (hit === 'middle') {
-        if (s.last_hit_bollinger === 'upper' && s.period.close < s.last_hit_close) {
+      if (s.period.bollinger.hit === 'middle') {
+        if (s.lookback[0].bollinger.hit === 'upper' && s.period.close < s.lookback[0].close) {
           trend = 'down'
-        } else if (s.last_hit_bollinger === 'lower' && s.period.close > s.last_hit_close) {
+        } else if (s.lookback[0].bollinger.hit === 'lower' && s.period.close > s.lookback[0].close) {
           trend = 'up'
         }
-        s.last_hit_bollinger = 'middle'
-      } else {
-        s.last_hit_bollinger = hit
       }
-      s.last_hit_close = s.period.close
 
       // signal
       s.signal = null
-      if (!filteredByBBW(s, bbw)) {
+      if (!filteredByBBW(s)) {
         if (trend === 'down') {
           s.signal = 'sell'
         } else if (trend === 'up') {
@@ -186,10 +189,9 @@ module.exports = {
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
-      let bbw = getBBW(s, upperBound, lowerBound)
 
-      let color = getBBWColor(s, bbw)
-      cols.push(z(6, n(bbw).format('0.000').substring(0,5), ' ')[color])
+      let color = getBBWColor(s)
+      cols.push(z(6, n(s.period.bollinger.bbw).format('0.000').substring(0,5), ' ')[color])
 
       color = getBBColor(s, upperBound, lowerBound)
       cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
@@ -199,9 +201,8 @@ module.exports = {
         color = getRSIColor(s)
         cols.push(z(3, n(s.period.rsi).format('0'), ' ')[color])
 
-        let hit = getHit(s, upperBound, lowerBound)
-        color = getBoundsColor(hit)
-        cols.push((' ' + hit.substring(0,3) + ' ')[color])
+        color = getHitColor(s)
+        cols.push((' ' + s.period.bollinger.hit.substring(0,3) + ' ')[color])
       }
     }
 
