@@ -55,6 +55,14 @@ function filteredByBBW(s) {
   return s.period.bollinger.bbw < s.options.bollinger_width_threshold
 }
 
+function filteredByPriceIsSameOrLess(s) {
+  return s.period.close <= s.lookback[0].close
+}
+
+function filteredByPriceIsSameOrGreater(s) {
+  return s.period.close >= s.lookback[0].close
+}
+
 function getBBWColor(s) {
   return (filteredByBBW(s)) ? 'grey' : 'cyan'
 }
@@ -158,9 +166,9 @@ module.exports = {
       // trend
       let trend
       if (s.period.bollinger.hit === 'middle') {
-        if (s.lookback[0].bollinger.hit === 'upper' && s.period.close < s.lookback[0].close) {
+        if (s.lookback[0].bollinger.hit === 'upper') {
           trend = 'down'
-        } else if (s.lookback[0].bollinger.hit === 'lower' && s.period.close > s.lookback[0].close) {
+        } else if (s.lookback[0].bollinger.hit === 'lower') {
           trend = 'up'
         }
       }
@@ -168,16 +176,20 @@ module.exports = {
       // signal
       s.signal = null
       if (trend === 'down') {
-        if (!filteredByBBW(s)) {
-          s.signal = 'sell'
-        } else {
+        if (filteredByBBW(s)) {
           console.error(('\nstrategy: SELL signal filtered by BBW').yellow)
+        } else if (filteredByPriceIsSameOrGreater(s)) {
+          console.error(('\nstrategy: SELL signal filtered by price is same or greater, was ' + s.lookback[0].close).yellow)
+        } else {
+          s.signal = 'sell'
         }
       } else if (trend === 'up') {
-        if (!filteredByBBW(s)) {
-          s.signal = 'buy'
-        } else {
+        if (filteredByBBW(s)) {
           console.error(('\nstrategy: BUY signal filtered by BBW').yellow)
+        } else if (filteredByPriceIsSameOrLess(s)) {
+          console.error(('\nstrategy: BUY signal filtered by price is same or less, was ' + s.lookback[0].close).yellow)
+        } else {
+          s.signal = 'buy'
         }
       }
     }
