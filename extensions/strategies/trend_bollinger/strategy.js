@@ -206,12 +206,6 @@ module.exports = {
         } else if (s.lookback[0].bollinger.hit === 'lower') {
           trend = 'up'
         }
-      } else if (s.lookback[0].bollinger.hit === 'middle') {
-        if (s.period.bollinger.hit === 'upper') {
-          trend = 'up'
-        } else if (s.period.bollinger.hit === 'lower') {
-          trend = 'down'
-        }
       }
 
       // signal
