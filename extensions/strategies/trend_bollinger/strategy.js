@@ -167,11 +167,17 @@ module.exports = {
 
       // signal
       s.signal = null
-      if (!filteredByBBW(s)) {
-        if (trend === 'down') {
+      if (trend === 'down') {
+        if (!filteredByBBW(s)) {
           s.signal = 'sell'
-        } else if (trend === 'up') {
+        } else {
+          console.error(('\nstrategy: SELL signal filtered by BBW').yellow)
+        }
+      } else if (trend === 'up') {
+        if (!filteredByBBW(s)) {
           s.signal = 'buy'
+        } else {
+          console.error(('\nstrategy: BUY signal filtered by BBW').yellow)
         }
       }
     }
