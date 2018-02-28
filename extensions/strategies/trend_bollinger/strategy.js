@@ -169,7 +169,7 @@ module.exports = {
     this.option('bollinger_time', 'times of standard deviation between the upper band and the moving averages', Number, 2)
     this.option('bollinger_upper_bound_pct', 'pct the current price should be near the bollinger upper bound before we sell', Number, 0)
     this.option('bollinger_lower_bound_pct', 'pct the current price should be near the bollinger lower bound before we buy', Number, 0)
-    this.option('bollinger_width_threshold', 'bollinger width threshold', Number, 0.07)
+    this.option('bollinger_width_threshold', 'bollinger width threshold', Number, 0.10)
 
     this.option('rsi_periods', 'number of RSI periods', 14)
     this.option('rsi_upper', 'RSI upper band', Number, 70)
@@ -205,6 +205,12 @@ module.exports = {
           trend = 'down'
         } else if (s.lookback[0].bollinger.hit === 'lower') {
           trend = 'up'
+        }
+      } else if (s.lookback[0].bollinger.hit === 'middle') {
+        if (s.period.bollinger.hit === 'upper') {
+          trend = 'up'
+        } else if (s.period.bollinger.hit === 'lower') {
+          trend = 'down'
         }
       }
 
