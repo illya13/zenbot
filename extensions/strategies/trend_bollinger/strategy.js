@@ -115,11 +115,11 @@ function getHitColor(s) {
 
 function getHitText(s) {
   if (s.period.bollinger.hit === 'upper') {
-    return ' hit: up  '
+    return '  hit: up  '
   } else if (s.period.bollinger.hit === 'lower') {
-    return ' hit: low '
+    return '  hit: low '
   } else {
-    return ' hit:     '
+    return '  hit:     '
   }
 }
 
