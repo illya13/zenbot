@@ -33,14 +33,38 @@ function isRSILower(s) {
   return s.period.rsi < s.options.rsi_lower
 }
 
+function isMACDUpper(s) {
+  return s.period.macd > 0
+}
+
+function isMACDLower(s) {
+  return s.period.macd < 0
+}
+
 function isLastHitEquals(s, hit) {
   return s.lookback[0].bollinger && s.lookback[0].bollinger.hit && s.lookback[0].bollinger.hit === hit
 }
 
+function isUpperHit(s, upperBound) {
+  return isUpper(s, upperBound) && isRSIUpper(s) && isBBWWide(s)
+}
+
+function isUpperHitNowOrBefore(s, upperBound) {
+  return isUpperHit(s, upperBound) || (isLastHitEquals(s, 'upper') && isMACDUpper(s))
+}
+
+function isLowerHit(s, lowerBound) {
+  return isLower(s, lowerBound) && isRSILower(s) && isBBWWide(s)
+}
+
+function isLowerHitNowOrBefore(s, lowerBound) {
+  return isLowerHit(s, lowerBound) || (isLastHitEquals(s, 'lower') && isMACDLower(s))
+}
+
 function hitBollinger(s, upperBound, lowerBound) {
-  if (isUpper(s, upperBound) && (isRSIUpper(s) || isLastHitEquals(s, 'upper'))) {
+  if (isUpperHitNowOrBefore(s, upperBound)) {
     s.period.bollinger.hit = 'upper'
-  } else if (isLower(s, lowerBound) && (isRSILower(s) || isLastHitEquals(s, 'lower'))) {
+  } else if (isLowerHitNowOrBefore(s, lowerBound)) {
     s.period.bollinger.hit = 'lower'
   } else {
     s.period.bollinger.hit = 'middle'
@@ -51,20 +75,12 @@ function bbw(s, upperBound, lowerBound) {
   s.period.bollinger.bbw = (upperBound - lowerBound) / getMiddle(s)
 }
 
-function filteredByBBW(s) {
-  return s.period.bollinger.bbw < s.options.bollinger_width_threshold
-}
-
-function filteredByPriceIsSameOrLess(s) {
-  return s.period.close <= s.lookback[0].close
-}
-
-function filteredByPriceIsSameOrGreater(s) {
-  return s.period.close >= s.lookback[0].close
+function isBBWWide(s) {
+  return s.period.bollinger.bbw > s.options.bollinger_width_threshold
 }
 
 function getBBWColor(s) {
-  return (filteredByBBW(s)) ? 'grey' : 'cyan'
+  return (isBBWWide(s)) ? 'cyan' : 'grey'
 }
 
 function getBBColor(s, upperBound, lowerBound) {
@@ -176,21 +192,9 @@ module.exports = {
       // signal
       s.signal = null
       if (trend === 'down') {
-        if (filteredByBBW(s)) {
-          console.error(('\nstrategy: SELL signal filtered by BBW').yellow)
-          //        } else if (filteredByPriceIsSameOrGreater(s)) {
-          //          console.error(('\nstrategy: SELL signal filtered by price is same or greater, was ' + s.lookback[0].close).yellow)
-        } else {
-          s.signal = 'sell'
-        }
+        s.signal = 'sell'
       } else if (trend === 'up') {
-        if (filteredByBBW(s)) {
-          console.error(('\nstrategy: BUY signal filtered by BBW').yellow)
-          //        } else if (filteredByPriceIsSameOrLess(s)) {
-          //          console.error(('\nstrategy: BUY signal filtered by price is same or less, was ' + s.lookback[0].close).yellow)
-        } else {
-          s.signal = 'buy'
-        }
+        s.signal = 'buy'
       }
     }
     cb()
