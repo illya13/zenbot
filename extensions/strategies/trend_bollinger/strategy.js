@@ -178,16 +178,16 @@ module.exports = {
       if (trend === 'down') {
         if (filteredByBBW(s)) {
           console.error(('\nstrategy: SELL signal filtered by BBW').yellow)
-        } else if (filteredByPriceIsSameOrGreater(s)) {
-          console.error(('\nstrategy: SELL signal filtered by price is same or greater, was ' + s.lookback[0].close).yellow)
+          //        } else if (filteredByPriceIsSameOrGreater(s)) {
+          //          console.error(('\nstrategy: SELL signal filtered by price is same or greater, was ' + s.lookback[0].close).yellow)
         } else {
           s.signal = 'sell'
         }
       } else if (trend === 'up') {
         if (filteredByBBW(s)) {
           console.error(('\nstrategy: BUY signal filtered by BBW').yellow)
-        } else if (filteredByPriceIsSameOrLess(s)) {
-          console.error(('\nstrategy: BUY signal filtered by price is same or less, was ' + s.lookback[0].close).yellow)
+          //        } else if (filteredByPriceIsSameOrLess(s)) {
+          //          console.error(('\nstrategy: BUY signal filtered by price is same or less, was ' + s.lookback[0].close).yellow)
         } else {
           s.signal = 'buy'
         }
