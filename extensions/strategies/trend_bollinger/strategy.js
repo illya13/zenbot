@@ -113,6 +113,16 @@ function getHitColor(s) {
   }
 }
 
+function getHitText(s) {
+  if (s.period.bollinger.hit === 'upper') {
+    return ' hit: up  '
+  } else if (s.period.bollinger.hit === 'lower') {
+    return ' hit: low '
+  } else {
+    return ' hit:     '
+  }
+}
+
 function macd(s) {
   ema(s, 'ema_short', s.options.ema_short_period)
   ema(s, 'ema_long', s.options.ema_long_period)
@@ -126,13 +136,22 @@ function macd(s) {
 }
 
 function getMACDColor(s) {
-  if (s.period.macd_histogram > 0) {
+  if (s.period.macd > 0) {
     return 'green'
-  }
-  else if (s.period.macd_histogram < 0) {
+  } else if (s.period.macd < 0) {
     return 'red'
   } else {
     return 'grey'
+  }
+}
+
+function getMACDText(s) {
+  if (s.period.macd > 0) {
+    return '  macd: up  '
+  } else if (s.period.macd < 0) {
+    return '  macd: low '
+  } else {
+    return '  macd:     '
   }
 }
 
@@ -203,12 +222,7 @@ module.exports = {
   onReport: function (s) {
     let cols = []
 
-    if (typeof s.period.macd_histogram === 'number') {
-      let color = getMACDColor(s)
-      cols.push(z(9, n(s.period.macd_histogram).format('+0.00000'), ' ')[color])
-    }
-
-    if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
+    if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower && s.period.macd && s.period.rsi) {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
 
@@ -219,13 +233,14 @@ module.exports = {
       cols.push(z(10, n(lowerBound).format('0.00000000').substring(0,9), ' ')[color])
       cols.push(z(10, n(upperBound).format('0.00000000').substring(0,9), ' ')[color])
 
-      if (typeof s.period.rsi === 'number') {
-        color = getRSIColor(s)
-        cols.push(z(3, n(s.period.rsi).format('0'), ' ')[color])
+      color = getMACDColor(s)
+      cols.push(getMACDText(s)[color])
 
-        color = getHitColor(s)
-        cols.push((' ' + s.period.bollinger.hit.substring(0,3) + ' ')[color])
-      }
+      color = getRSIColor(s)
+      cols.push(z(3, n(s.period.rsi).format('0'), ' ')[color])
+
+      color = getHitColor(s)
+      cols.push(getHitText(s)[color])
     }
 
     return cols
