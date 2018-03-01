@@ -59,12 +59,12 @@ function isUpperHit(s, upperBound) {
   return isUpper(s, upperBound) && isRSIUpper(s) && isBBWWide(s)
 }
 
-function isUptrendNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDUpper(s))
-}
-
 function isLowerHit(s, lowerBound) {
   return isLower(s, lowerBound) && isRSILower(s) && isBBWWide(s)
+}
+
+function isUptrendNowOrBefore(s, upperBound) {
+  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDUpper(s))
 }
 
 function isDowntrendNowOrBefore(s, lowerBound) {
@@ -165,6 +165,10 @@ function getMACDText(s) {
   }
 }
 
+function isAllSet(s) {
+  return s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower && s.period.macd && s.period.rsi
+}
+
 
 module.exports = {
   name: 'trend_bollinger',
@@ -207,7 +211,7 @@ module.exports = {
   onPeriod: function (s, cb) {
     if (s.in_preroll) return cb()
 
-    if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
+    if (isAllSet(s)) {
       let trendBreak = periodTrendEqualsTo(s, SIDEWAYS_TREND) &&
         (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND))
 
@@ -226,7 +230,7 @@ module.exports = {
   onReport: function (s) {
     let cols = []
 
-    if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower && s.period.macd && s.period.rsi) {
+    if (isAllSet(s)) {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
 
