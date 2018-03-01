@@ -212,8 +212,10 @@ module.exports = {
     if (s.in_preroll) return cb()
 
     if (isAllSet(s)) {
-      let trendBreak = periodTrendEqualsTo(s, SIDEWAYS_TREND) &&
-        (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND))
+      let trendBreak =
+        ( periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND)) )
+        || ( periodTrendEqualsTo(s, UPTREND) && lastPeriodTrendEqualsTo(s, DOWNTREND) )
+        || ( periodTrendEqualsTo(s, DOWNTREND) && lastPeriodTrendEqualsTo(s, UPTREND) )
 
       s.signal = null
       if (trendBreak) {
