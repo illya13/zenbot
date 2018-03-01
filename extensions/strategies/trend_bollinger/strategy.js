@@ -39,36 +39,36 @@ function getMiddle(s) {
   return s.period.bollinger.mid[s.period.bollinger.upper.length-1]
 }
 
-function isRSIUpper(s) {
+function isRSIOverbought(s) {
   return s.period.rsi > s.options.rsi_upper
 }
 
-function isRSILower(s) {
+function isRSIOversold(s) {
   return s.period.rsi < s.options.rsi_lower
 }
 
-function isMACDUpper(s) {
+function isMACDPositive(s) {
   return s.period.macd > 0
 }
 
-function isMACDLower(s) {
+function isMACDNegative(s) {
   return s.period.macd < 0
 }
 
 function isUpperHit(s, upperBound) {
-  return isUpper(s, upperBound) && isRSIUpper(s) && isBBWWide(s)
+  return isUpper(s, upperBound) && isRSIOverbought(s) && isBBWWide(s)
 }
 
 function isLowerHit(s, lowerBound) {
-  return isLower(s, lowerBound) && isRSILower(s) && isBBWWide(s)
+  return isLower(s, lowerBound) && isRSIOversold(s) && isBBWWide(s)
 }
 
 function isUptrendNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDUpper(s))
+  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDPositive(s))
 }
 
 function isDowntrendNowOrBefore(s, lowerBound) {
-  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isMACDLower(s))
+  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isMACDNegative(s))
 }
 
 function updateTrend(s, upperBound, lowerBound) {
@@ -104,9 +104,9 @@ function getBBColor(s, upperBound, lowerBound) {
 }
 
 function getRSIColor(s) {
-  if (isRSIUpper(s)) {
+  if (isRSIOverbought(s)) {
     return 'green'
-  } else if (isRSILower(s)) {
+  } else if (isRSIOversold(s)) {
     return 'red'
   } else {
     return 'grey'
@@ -146,9 +146,9 @@ function macd(s) {
 }
 
 function getMACDColor(s) {
-  if (s.period.macd > 0) {
+  if (isMACDPositive(s)) {
     return 'green'
-  } else if (s.period.macd < 0) {
+  } else if (isMACDNegative(s)) {
     return 'red'
   } else {
     return 'grey'
@@ -156,9 +156,9 @@ function getMACDColor(s) {
 }
 
 function getMACDText(s) {
-  if (s.period.macd > 0) {
+  if (isMACDPositive(s)) {
     return '  macd: + '
-  } else if (s.period.macd < 0) {
+  } else if (isMACDNegative(s)) {
     return '  macd: - '
   } else {
     return '  macd:   '
