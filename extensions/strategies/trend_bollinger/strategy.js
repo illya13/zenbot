@@ -5,6 +5,20 @@ let z = require('zero-fill')
   , ema = require('../../../lib/ema')
 
 
+const UPTREND = 'up', DOWNTREND = 'down', SIDEWAYS_TREND = 'side'
+
+function trendEqualsTo(trend, t) {
+  return trend === t
+}
+
+function periodTrendEqualsTo(s, t) {
+  return s.period.trend && trendEqualsTo(s.period.trend, t)
+}
+
+function lastPeriodTrendEqualsTo(s, t) {
+  return s.lookback[0].trend && trendEqualsTo(s.lookback[0].trend, t)
+}
+
 function getUpperBound(s) {
   return s.period.bollinger.upper[s.period.bollinger.upper.length-1]
 }
@@ -41,33 +55,29 @@ function isMACDLower(s) {
   return s.period.macd < 0
 }
 
-function isLastHitEquals(s, hit) {
-  return s.lookback[0].bollinger && s.lookback[0].bollinger.hit && s.lookback[0].bollinger.hit === hit
-}
-
 function isUpperHit(s, upperBound) {
   return isUpper(s, upperBound) && isRSIUpper(s) && isBBWWide(s)
 }
 
-function isUpperHitNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (isLastHitEquals(s, 'upper') && isMACDUpper(s))
+function isUptrendNowOrBefore(s, upperBound) {
+  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDUpper(s))
 }
 
 function isLowerHit(s, lowerBound) {
   return isLower(s, lowerBound) && isRSILower(s) && isBBWWide(s)
 }
 
-function isLowerHitNowOrBefore(s, lowerBound) {
-  return isLowerHit(s, lowerBound) || (isLastHitEquals(s, 'lower') && isMACDLower(s))
+function isDowntrendNowOrBefore(s, lowerBound) {
+  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isMACDLower(s))
 }
 
-function hitBollinger(s, upperBound, lowerBound) {
-  if (isUpperHitNowOrBefore(s, upperBound)) {
-    s.period.bollinger.hit = 'upper'
-  } else if (isLowerHitNowOrBefore(s, lowerBound)) {
-    s.period.bollinger.hit = 'lower'
+function updateTrend(s, upperBound, lowerBound) {
+  if (isUptrendNowOrBefore(s, upperBound)) {
+    s.period.trend = UPTREND
+  } else if (isDowntrendNowOrBefore(s, lowerBound)) {
+    s.period.trend = DOWNTREND
   } else {
-    s.period.bollinger.hit = 'middle'
+    s.period.trend = SIDEWAYS_TREND
   }
 }
 
@@ -103,23 +113,23 @@ function getRSIColor(s) {
   }
 }
 
-function getHitColor(s) {
-  if (s.period.bollinger.hit === 'upper') {
+function getTrendColor(s) {
+  if (periodTrendEqualsTo(s, UPTREND)) {
     return 'green'
-  } else if (s.period.bollinger.hit === 'lower') {
+  } else if (periodTrendEqualsTo(s, DOWNTREND)) {
     return 'red'
-  } else {
+  } else if (periodTrendEqualsTo(s, SIDEWAYS_TREND)) {
     return 'grey'
   }
 }
 
-function getHitText(s) {
-  if (s.period.bollinger.hit === 'upper') {
-    return '  hit: up  '
-  } else if (s.period.bollinger.hit === 'lower') {
-    return '  hit: low '
-  } else {
-    return '  hit:     '
+function getTrendText(s) {
+  if (periodTrendEqualsTo(s, UPTREND)) {
+    return '  trend: up   '
+  } else if (periodTrendEqualsTo(s, DOWNTREND)) {
+    return '  trend: down '
+  } else if (periodTrendEqualsTo(s, SIDEWAYS_TREND)) {
+    return '  trend: side '
   }
 }
 
@@ -147,11 +157,11 @@ function getMACDColor(s) {
 
 function getMACDText(s) {
   if (s.period.macd > 0) {
-    return '  macd: up  '
+    return '  macd: + '
   } else if (s.period.macd < 0) {
-    return '  macd: low '
+    return '  macd: - '
   } else {
-    return '  macd:     '
+    return '  macd:   '
   }
 }
 
@@ -187,7 +197,7 @@ module.exports = {
       let upperBound = getUpperBound(s)
       let lowerBound = getLowerBound(s)
       bbw(s, upperBound, lowerBound)
-      hitBollinger(s, upperBound, lowerBound)
+      updateTrend(s, upperBound, lowerBound)
     }
 
     rsi(s, 'rsi', s.options.rsi_periods)
@@ -198,22 +208,16 @@ module.exports = {
     if (s.in_preroll) return cb()
 
     if (s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower) {
-      // trend
-      let trend
-      if (s.period.bollinger.hit === 'middle') {
-        if (s.lookback[0].bollinger.hit === 'upper') {
-          trend = 'down'
-        } else if (s.lookback[0].bollinger.hit === 'lower') {
-          trend = 'up'
-        }
-      }
+      let trendBreak = periodTrendEqualsTo(s, SIDEWAYS_TREND) &&
+        (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND))
 
-      // signal
       s.signal = null
-      if (trend === 'down') {
-        s.signal = 'sell'
-      } else if (trend === 'up') {
-        s.signal = 'buy'
+      if (trendBreak) {
+        if (lastPeriodTrendEqualsTo(s, UPTREND)) {
+          s.signal = 'sell'
+        } else if (lastPeriodTrendEqualsTo(s, DOWNTREND)) {
+          s.signal = 'buy'
+        }
       }
     }
     cb()
@@ -237,10 +241,10 @@ module.exports = {
       cols.push(getMACDText(s)[color])
 
       color = getRSIColor(s)
-      cols.push(z(3, n(s.period.rsi).format('0'), ' ')[color])
+      cols.push((' rsi: ' + z(2, n(s.period.rsi).format('0'), ' '))[color])
 
-      color = getHitColor(s)
-      cols.push(getHitText(s)[color])
+      color = getTrendColor(s)
+      cols.push(getTrendText(s)[color])
     }
 
     return cols
