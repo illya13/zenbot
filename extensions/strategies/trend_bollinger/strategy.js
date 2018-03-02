@@ -232,7 +232,7 @@ module.exports = {
     this.option('ema_long_period', 'number of periods for the longer EMA', Number, 26)
     this.option('signal_period', 'number of periods for the signal EMA', Number, 9)
 
-    this.option('cci_periods', 'number of RSI periods', Number, 14)
+    this.option('cci_periods', 'number of CCI periods', Number, 20)
     this.option('cci_constant', 'constant', Number, 0.015)
     this.option('cci_overbought', 'sell when CCI reaches or goes above this value', Number, 100)
     this.option('cci_oversold', 'buy when CCI reaches or drops below this value', Number, -100)
