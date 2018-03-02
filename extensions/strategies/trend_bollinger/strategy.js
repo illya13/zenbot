@@ -3,6 +3,8 @@ let z = require('zero-fill')
   , bollinger = require('../../../lib/bollinger')
   , rsi = require('../../../lib/rsi')
   , ema = require('../../../lib/ema')
+  , cci = require('../../../lib/cci')
+  , stoch = require('../../../lib/slow_stochastic')
 
 
 const UPTREND = 'up', DOWNTREND = 'down', SIDEWAYS_TREND = 'side'
@@ -40,11 +42,11 @@ function getMiddle(s) {
 }
 
 function isRSIOverbought(s) {
-  return s.period.rsi > s.options.rsi_upper
+  return s.period.rsi > s.options.rsi_overbought
 }
 
 function isRSIOversold(s) {
-  return s.period.rsi < s.options.rsi_lower
+  return s.period.rsi < s.options.rsi_oversold
 }
 
 function isMACDPositive(s) {
@@ -53,6 +55,22 @@ function isMACDPositive(s) {
 
 function isMACDNegative(s) {
   return s.period.macd < 0
+}
+
+function isCCIOverbought(s) {
+  return s.period.cci > s.options.cci_overbought
+}
+
+function isCCIOversold(s) {
+  return s.period.cci < s.options.cci_oversold
+}
+
+function isStochOverbought(s) {
+  return s.period.stoch.D > s.options.stoch_overbought
+}
+
+function isStochOversold(s) {
+  return s.period.stoch.D < s.options.stoch_oversold
 }
 
 function isUpperHit(s, upperBound) {
@@ -113,6 +131,26 @@ function getRSIColor(s) {
   }
 }
 
+function getCCIColor(s) {
+  if (isCCIOverbought(s)) {
+    return 'green'
+  } else if (isCCIOversold(s)) {
+    return 'red'
+  } else {
+    return 'grey'
+  }
+}
+
+function getStochColor(s) {
+  if (isStochOverbought(s)) {
+    return 'green'
+  } else if (isStochOversold(s)) {
+    return 'red'
+  } else {
+    return 'grey'
+  }
+}
+
 function getTrendColor(s) {
   if (periodTrendEqualsTo(s, UPTREND)) {
     return 'green'
@@ -166,7 +204,8 @@ function getMACDText(s) {
 }
 
 function isAllSet(s) {
-  return s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower && s.period.macd && s.period.rsi
+  return s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower &&
+    s.period.macd && s.period.rsi && s.period.cci && s.period.stoch.D
 }
 
 
@@ -186,12 +225,22 @@ module.exports = {
     this.option('bollinger_width_threshold', 'bollinger width threshold', Number, 0.10)
 
     this.option('rsi_periods', 'number of RSI periods', 14)
-    this.option('rsi_upper', 'RSI upper band', Number, 70)
-    this.option('rsi_lower', 'RSI lower band', Number, 30)
+    this.option('rsi_overbought', 'RSI upper band', Number, 70)
+    this.option('rsi_oversold', 'RSI lower band', Number, 30)
 
     this.option('ema_short_period', 'number of periods for the shorter EMA', Number, 12)
     this.option('ema_long_period', 'number of periods for the longer EMA', Number, 26)
     this.option('signal_period', 'number of periods for the signal EMA', Number, 9)
+
+    this.option('cci_periods', 'number of RSI periods', Number, 14)
+    this.option('cci_constant', 'constant', Number, 0.015)
+    this.option('cci_overbought', 'sell when CCI reaches or goes above this value', Number, 100)
+    this.option('cci_oversold', 'buy when CCI reaches or drops below this value', Number, -100)
+
+    this.option('stoch_k', '%K line', Number, 14)
+    this.option('stoch_d', '%D line', Number, 3)
+    this.option('stoch_overbought', 'Stoch upper band', Number, 80)
+    this.option('stoch_oversold', 'Stoch lower band', Number, 20)
   },
 
   calculate: function (s) {
@@ -206,6 +255,8 @@ module.exports = {
 
     rsi(s, 'rsi', s.options.rsi_periods)
     macd(s)
+    cci(s, 'cci', s.options.cci_periods, s.options.cci_constant)
+    stoch(s, 'stoch', s.options.stoch_k, s.options.stoch_d)
   },
 
   onPeriod: function (s, cb) {
@@ -213,9 +264,9 @@ module.exports = {
 
     if (isAllSet(s)) {
       let trendBreak =
-        ( periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND)) )
-        || ( periodTrendEqualsTo(s, UPTREND) && lastPeriodTrendEqualsTo(s, DOWNTREND) )
-        || ( periodTrendEqualsTo(s, DOWNTREND) && lastPeriodTrendEqualsTo(s, UPTREND) )
+        ( periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND)) ) ||
+        ( periodTrendEqualsTo(s, UPTREND) && lastPeriodTrendEqualsTo(s, DOWNTREND) ) ||
+        ( periodTrendEqualsTo(s, DOWNTREND) && lastPeriodTrendEqualsTo(s, UPTREND) )
 
       s.signal = null
       if (trendBreak) {
@@ -248,6 +299,12 @@ module.exports = {
 
       color = getRSIColor(s)
       cols.push((' rsi: ' + z(2, n(s.period.rsi).format('0'), ' '))[color])
+
+      color = getCCIColor(s)
+      cols.push(('  cci: ' + z(4, n(s.period.cci).format('000'), ' '))[color])
+
+      color = getStochColor(s)
+      cols.push(('  stoch: ' + z(3, n(s.period.stoch.D).format('000'), ' '))[color])
 
       color = getTrendColor(s)
       cols.push(getTrendText(s)[color])
