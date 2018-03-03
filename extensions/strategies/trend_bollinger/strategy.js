@@ -74,11 +74,11 @@ function isStochOversold(s) {
 }
 
 function isUpperHit(s, upperBound) {
-  return isUpper(s, upperBound) && isRSIOverbought(s) && isBBWWide(s)
+  return isUpper(s, upperBound) && isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) && isBBWWide(s)
 }
 
 function isLowerHit(s, lowerBound) {
-  return isLower(s, lowerBound) && isRSIOversold(s) && isBBWWide(s)
+  return isLower(s, lowerBound) && isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) && isBBWWide(s)
 }
 
 function isUptrendNowOrBefore(s, upperBound) {
@@ -239,8 +239,8 @@ module.exports = {
 
     this.option('stoch_k', '%K line', Number, 14)
     this.option('stoch_d', '%D line', Number, 3)
-    this.option('stoch_overbought', 'Stoch upper band', Number, 80)
-    this.option('stoch_oversold', 'Stoch lower band', Number, 20)
+    this.option('stoch_overbought', 'Stoch upper band', Number, 70)
+    this.option('stoch_oversold', 'Stoch lower band', Number, 30)
   },
 
   calculate: function (s) {
