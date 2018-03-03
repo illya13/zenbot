@@ -245,6 +245,10 @@ module.exports = {
 
   calculate: function (s) {
     bollinger(s, 'bollinger', s.options.bollinger_size)
+    rsi(s, 'rsi', s.options.rsi_periods)
+    macd(s)
+    cci(s, 'cci', s.options.cci_periods, s.options.cci_constant)
+    stoch(s, 'stoch', s.options.stoch_k, s.options.stoch_d)
 
     if (s.lookback.length > s.options.bollinger_size) {
       let upperBound = getUpperBound(s)
@@ -252,11 +256,6 @@ module.exports = {
       bbw(s, upperBound, lowerBound)
       updateTrend(s, upperBound, lowerBound)
     }
-
-    rsi(s, 'rsi', s.options.rsi_periods)
-    macd(s)
-    cci(s, 'cci', s.options.cci_periods, s.options.cci_constant)
-    stoch(s, 'stoch', s.options.stoch_k, s.options.stoch_d)
   },
 
   onPeriod: function (s, cb) {
