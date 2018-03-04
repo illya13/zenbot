@@ -81,14 +81,6 @@ function isLowerHit(s, lowerBound) {
   return isLower(s, lowerBound) && isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) && isBBWWide(s)
 }
 
-function isUptrendNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDPositive(s))
-}
-
-function isDowntrendNowOrBefore(s, lowerBound) {
-  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isMACDNegative(s))
-}
-
 function updateTrend(s, upperBound, lowerBound) {
   if (isUpperHit(s, upperBound)) {
     s.period.trend = UPTREND
