@@ -445,6 +445,7 @@ module.exports = function (program, conf) {
                     if (prev_session.orig_capital && prev_session.orig_price && ((so.mode === 'paper' && !raw_opts.currency_capital && !raw_opts.asset_capital) || (so.mode === 'live' && prev_session.balance.asset == s.balance.asset && prev_session.balance.currency == s.balance.currency))) {
                       s.orig_capital = session.orig_capital = prev_session.orig_capital
                       s.orig_price = session.orig_price = prev_session.orig_price
+                      s.orig_asset = session.orig_asset = prev_session.orig_asset
                       if (so.mode === 'paper') {
                         s.balance = prev_session.balance
                       }
@@ -557,6 +558,7 @@ module.exports = function (program, conf) {
             session.num_trades = s.my_trades.length
             if (!session.orig_capital) session.orig_capital = s.start_capital
             if (!session.orig_price) session.orig_price = s.start_price
+            if (!session.orig_asset) session.orig_asset = s.start_asset
             if (s.period) {
               session.price = s.period.close
               var d = tb().resize(conf.balance_snapshot_period)
@@ -569,6 +571,7 @@ module.exports = function (program, conf) {
                 price: s.period.close,
                 start_capital: session.orig_capital,
                 start_price: session.orig_price,
+                start_asset: session.orig_asset,
               }
               b._id = b.id
               b.consolidated = n(s.balance.asset).multiply(s.period.close).add(s.balance.currency).value()
