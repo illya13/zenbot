@@ -210,7 +210,7 @@ function isAllSet(s) {
 
 
 module.exports = {
-  name: 'trend_stoch',
+  name: 'trend_macd',
   description: 'Buy when (Signal ≤ Lower Bollinger Band && trend up) and sell when (Signal ≥ Upper Bollinger Band && trend down).',
 
   getOptions: function () {
