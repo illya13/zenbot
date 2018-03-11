@@ -552,6 +552,7 @@ module.exports = function (program, conf) {
             session.updated = new Date().getTime()
             session.balance = s.balance
             session.start_capital = s.start_capital
+            session.start_asset = s.start_asset
             session.start_price = s.start_price
             session.num_trades = s.my_trades.length
             if (!session.orig_capital) session.orig_capital = s.start_capital
