@@ -5,6 +5,7 @@ let z = require('zero-fill')
   , ema = require('../../../lib/ema')
   , cci = require('../../../lib/cci')
   , stoch = require('../../../lib/slow_stochastic')
+  , adx = require('../../../lib/adx')
 
 
 const UPTREND = 'up', DOWNTREND = 'down', SIDEWAYS_TREND = 'side'
@@ -195,17 +196,26 @@ function getMACDColor(s) {
 
 function getMACDText(s) {
   if (isMACDPositive(s)) {
-    return '  macd: + '
+    return '  + '
   } else if (isMACDNegative(s)) {
-    return '  macd: - '
+    return '  - '
   } else {
-    return '  macd:   '
+    return '    '
   }
 }
 
+function getADXColor(s) {
+  if (s.period.adx > s.options.adx_threshold) {
+    return 'cyan'
+  } else {
+    return 'grey'
+  }
+}
+
+
 function isAllSet(s) {
   return s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower &&
-    s.period.macd && s.period.rsi && s.period.cci && s.period.stoch.D
+    s.period.macd && s.period.rsi && s.period.cci && s.period.stoch.D && s.period.adx
 }
 
 
@@ -224,7 +234,7 @@ module.exports = {
     this.option('bollinger_lower_bound_pct', 'pct the current price should be near the bollinger lower bound before we buy', Number, 0)
     this.option('bollinger_width_threshold', 'bollinger width threshold', Number, 0.10)
 
-    this.option('rsi_periods', 'number of RSI periods', 14)
+    this.option('rsi_periods', 'number of RSI periods', Number, 14)
     this.option('rsi_overbought', 'RSI upper band', Number, 70)
     this.option('rsi_oversold', 'RSI lower band', Number, 30)
 
@@ -241,6 +251,9 @@ module.exports = {
     this.option('stoch_d', '%D line', Number, 3)
     this.option('stoch_overbought', 'Stoch upper band', Number, 70)
     this.option('stoch_oversold', 'Stoch lower band', Number, 30)
+
+    this.option('adx_periods', 'number of ADX periods', Number, 14)
+    this.option('adx_threshold', 'adx threshold', Number, 30)
   },
 
   calculate: function (s) {
@@ -249,6 +262,7 @@ module.exports = {
     macd(s)
     cci(s, 'cci', s.options.cci_periods, s.options.cci_constant)
     stoch(s, 'stoch', s.options.stoch_k, s.options.stoch_d)
+    adx(s, 'adx', s.options.adx_periods)
 
     if (s.lookback.length > s.options.bollinger_size) {
       let upperBound = getUpperBound(s)
@@ -297,7 +311,10 @@ module.exports = {
       cols.push(getMACDText(s)[color])
 
       color = getRSIColor(s)
-      cols.push((' rsi: ' + z(2, n(s.period.rsi).format('0'), ' '))[color])
+      cols.push((z(2, n(s.period.rsi).format('0'), ' '))[color])
+
+      color = getADXColor(s)
+      cols.push(('  adx: ' + z(2, n(s.period.adx).format('0'), ' '))[color])
 
       color = getCCIColor(s)
       cols.push(('  cci: ' + z(4, n(s.period.cci).format('000'), ' '))[color])
