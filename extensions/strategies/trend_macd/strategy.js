@@ -164,11 +164,11 @@ function getTrendColor(s) {
 
 function getTrendText(s) {
   if (periodTrendEqualsTo(s, UPTREND)) {
-    return '  trend: up   '
+    return '  up   '
   } else if (periodTrendEqualsTo(s, DOWNTREND)) {
-    return '  trend: down '
+    return '  down '
   } else if (periodTrendEqualsTo(s, SIDEWAYS_TREND)) {
-    return '  trend: side '
+    return '  side '
   }
 }
 
@@ -313,14 +313,14 @@ module.exports = {
       color = getRSIColor(s)
       cols.push((z(2, n(s.period.rsi).format('0'), ' '))[color])
 
-      color = getADXColor(s)
-      cols.push(('  adx: ' + z(2, n(s.period.adx).format('0'), ' '))[color])
-
       color = getCCIColor(s)
       cols.push(('  cci: ' + z(4, n(s.period.cci).format('000'), ' '))[color])
 
       color = getStochColor(s)
       cols.push(('  stoch: ' + z(3, n(s.period.stoch.D).format('000'), ' '))[color])
+
+      color = getADXColor(s)
+      cols.push(('  adx: ' + z(2, n(s.period.adx).format('0'), ' '))[color])
 
       color = getTrendColor(s)
       cols.push(getTrendText(s)[color])
