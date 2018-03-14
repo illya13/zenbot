@@ -226,7 +226,8 @@ function calcIndicators(s) {
 
 function isAllSet(s) {
   return s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower &&
-    s.period.macd && s.period.rsi && s.period.cci && s.period.stoch.D && s.period.adx
+    s.period.macd && s.period.rsi && s.period.cci && s.period.stoch.D &&
+    s.period.adx && s.period.obv && s.period.adosc
 }
 
 
