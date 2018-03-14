@@ -214,6 +214,14 @@ function calcIndicators(s) {
     s.options.adx_periods,
     s.options.chaikin_fast, s.options.chaikin_slow
   )
+    .then((calculated) => {
+      if (calculated) {
+        let upperBound = getUpperBound(s)
+        let lowerBound = getLowerBound(s)
+        bbw(s, upperBound, lowerBound)
+        updateTrend(s, upperBound, lowerBound)
+      }
+    })
 }
 
 function isAllSet(s) {
@@ -266,12 +274,6 @@ module.exports = {
     if (s.in_preroll) return
 
     calcIndicators(s)
-      .then(() => {
-        let upperBound = getUpperBound(s)
-        let lowerBound = getLowerBound(s)
-        bbw(s, upperBound, lowerBound)
-        updateTrend(s, upperBound, lowerBound)
-      })
       .catch((error) => console.log(error))
   },
 
@@ -280,11 +282,6 @@ module.exports = {
 
     calcIndicators(s)
       .then(() => {
-        let upperBound = getUpperBound(s)
-        let lowerBound = getLowerBound(s)
-        bbw(s, upperBound, lowerBound)
-        updateTrend(s, upperBound, lowerBound)
-
         if (isAllSet(s)) {
           let trendBreak =
             (periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND))) ||
