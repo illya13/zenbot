@@ -338,7 +338,7 @@ module.exports = {
       color = getADXColor(s)
       cols.push((' ' + z(2, n(s.period.adx).format('0'), ' '))[color])
 
-      cols.push(formatVolume(s.period.obv, 8).gray)
+      cols.push(formatVolume(s.period.obv, 9).gray)
       cols.push(formatVolume(s.period.adosc, 9).gray)
     }
 
