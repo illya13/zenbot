@@ -1,11 +1,7 @@
 let z = require('zero-fill')
   , n = require('numbro')
-  , bollinger = require('../../../lib/bollinger')
-  , rsi = require('../../../lib/rsi')
-  , ema = require('../../../lib/ema')
-  , cci = require('../../../lib/cci')
-  , stoch = require('../../../lib/slow_stochastic')
-  , adx = require('../../../lib/adx')
+  , abbreviate = require('number-abbreviate')
+  , ta_trend_macd = require('../../../lib/ta_trend_macd')
 
 
 const UPTREND = 'up', DOWNTREND = 'down', SIDEWAYS_TREND = 'side'
@@ -23,7 +19,7 @@ function lastPeriodTrendEqualsTo(s, t) {
 }
 
 function getUpperBound(s) {
-  return s.period.bollinger.upper[s.period.bollinger.upper.length-1]
+  return s.period.bollinger.upper
 }
 
 function isUpper(s, upperBound) {
@@ -31,7 +27,7 @@ function isUpper(s, upperBound) {
 }
 
 function getLowerBound(s) {
-  return s.period.bollinger.lower[s.period.bollinger.lower.length-1]
+  return s.period.bollinger.lower
 }
 
 function isLower(s, lowerBound) {
@@ -39,7 +35,7 @@ function isLower(s, lowerBound) {
 }
 
 function getMiddle(s) {
-  return s.period.bollinger.mid[s.period.bollinger.upper.length-1]
+  return s.period.bollinger.middle
 }
 
 function isRSIOverbought(s) {
@@ -172,18 +168,6 @@ function getTrendText(s) {
   }
 }
 
-function macd(s) {
-  ema(s, 'ema_short', s.options.ema_short_period)
-  ema(s, 'ema_long', s.options.ema_long_period)
-  if (s.period.ema_short && s.period.ema_long) {
-    s.period.macd = (s.period.ema_short - s.period.ema_long)
-    ema(s, 'signal', s.options.signal_period, 'macd')
-    if (s.period.signal) {
-      s.period.macd_histogram = s.period.macd - s.period.signal
-    }
-  }
-}
-
 function getMACDColor(s) {
   if (isMACDPositive(s)) {
     return 'green'
@@ -212,6 +196,25 @@ function getADXColor(s) {
   }
 }
 
+function formatVolume(value) {
+  let volume_display = (value > 999 || value < -999) ? abbreviate(value, 2) : n(value).format('0')
+  volume_display = z(8, volume_display, ' ')
+  if (volume_display.indexOf('.') === -1) volume_display = ' ' + volume_display
+  return volume_display
+}
+
+function calcIndicators(s) {
+  return ta_trend_macd(
+    s, s.options.min_periods,
+    s.options.bollinger_size, s.options.bollinger_time,
+    s.options.rsi_periods,
+    s.options.ema_short_period, s.options.ema_long_period, s.options.signal_period,
+    s.options.cci_periods, s.options.cci_constant,
+    s.options.stoch_k, s.options.stoch_d,
+    s.options.adx_periods,
+    s.options.chaikin_fast, s.options.chaikin_slow
+  )
+}
 
 function isAllSet(s) {
   return s.period.bollinger && s.period.bollinger.upper && s.period.bollinger.lower &&
@@ -254,43 +257,55 @@ module.exports = {
 
     this.option('adx_periods', 'number of ADX periods', Number, 14)
     this.option('adx_threshold', 'adx threshold', Number, 30)
+
+    this.option('chaikin_fast', 'Chaikin fast period', Number, 3)
+    this.option('chaikin_slow', 'Chaikin slow period', Number, 10)
   },
 
   calculate: function (s) {
-    bollinger(s, 'bollinger', s.options.bollinger_size)
-    rsi(s, 'rsi', s.options.rsi_periods)
-    macd(s)
-    cci(s, 'cci', s.options.cci_periods, s.options.cci_constant)
-    stoch(s, 'stoch', s.options.stoch_k, s.options.stoch_d)
-    adx(s, 'adx', s.options.adx_periods)
+    if (s.in_preroll) return
 
-    if (s.lookback.length > s.options.bollinger_size) {
-      let upperBound = getUpperBound(s)
-      let lowerBound = getLowerBound(s)
-      bbw(s, upperBound, lowerBound)
-      updateTrend(s, upperBound, lowerBound)
-    }
+    calcIndicators(s)
+      .then(() => {
+        let upperBound = getUpperBound(s)
+        let lowerBound = getLowerBound(s)
+        bbw(s, upperBound, lowerBound)
+        updateTrend(s, upperBound, lowerBound)
+      })
+      .catch((error) => console.log(error))
   },
 
   onPeriod: function (s, cb) {
     if (s.in_preroll) return cb()
 
-    if (isAllSet(s)) {
-      let trendBreak =
-        ( periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND)) ) ||
-        ( periodTrendEqualsTo(s, UPTREND) && lastPeriodTrendEqualsTo(s, DOWNTREND) ) ||
-        ( periodTrendEqualsTo(s, DOWNTREND) && lastPeriodTrendEqualsTo(s, UPTREND) )
+    calcIndicators(s)
+      .then(() => {
+        let upperBound = getUpperBound(s)
+        let lowerBound = getLowerBound(s)
+        bbw(s, upperBound, lowerBound)
+        updateTrend(s, upperBound, lowerBound)
 
-      s.signal = null
-      if (trendBreak) {
-        if (lastPeriodTrendEqualsTo(s, UPTREND)) {
-          s.signal = 'sell'
-        } else if (lastPeriodTrendEqualsTo(s, DOWNTREND)) {
-          s.signal = 'buy'
+        if (isAllSet(s)) {
+          let trendBreak =
+            (periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND))) ||
+            (periodTrendEqualsTo(s, UPTREND) && lastPeriodTrendEqualsTo(s, DOWNTREND)) ||
+            (periodTrendEqualsTo(s, DOWNTREND) && lastPeriodTrendEqualsTo(s, UPTREND))
+
+          s.signal = null
+          if (trendBreak) {
+            if (lastPeriodTrendEqualsTo(s, UPTREND)) {
+              s.signal = 'sell'
+            } else if (lastPeriodTrendEqualsTo(s, DOWNTREND)) {
+              s.signal = 'buy'
+            }
+          }
         }
-      }
-    }
-    cb()
+        cb()
+      })
+      .catch((error) => {
+        console.log(error)
+        cb()
+      })
   },
 
   onReport: function (s) {
@@ -313,17 +328,20 @@ module.exports = {
       color = getRSIColor(s)
       cols.push((z(2, n(s.period.rsi).format('0'), ' '))[color])
 
-      color = getCCIColor(s)
-      cols.push(('  cci: ' + z(4, n(s.period.cci).format('000'), ' '))[color])
-
       color = getStochColor(s)
-      cols.push(('  stoch: ' + z(3, n(s.period.stoch.D).format('000'), ' '))[color])
+      cols.push((' ' + z(3, n(s.period.stoch.D).format('000'), ' '))[color])
 
-      color = getADXColor(s)
-      cols.push(('  adx: ' + z(2, n(s.period.adx).format('0'), ' '))[color])
+      color = getCCIColor(s)
+      cols.push((' ' + z(4, n(s.period.cci).format('000'), ' '))[color])
 
       color = getTrendColor(s)
       cols.push(getTrendText(s)[color])
+
+      color = getADXColor(s)
+      cols.push((' ' + z(2, n(s.period.adx).format('0'), ' '))[color])
+
+      cols.push((formatVolume(s.period.obv)).gray)
+      cols.push((formatVolume(s.period.adosc)).gray)
     }
 
     return cols
