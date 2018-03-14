@@ -279,8 +279,6 @@ module.exports = {
   },
 
   onPeriod: function (s, cb) {
-    if (s.in_preroll) return cb()
-
     calcIndicators(s)
       .then(() => {
         if (isAllSet(s)) {
