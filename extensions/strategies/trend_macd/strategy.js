@@ -196,9 +196,9 @@ function getADXColor(s) {
   }
 }
 
-function formatVolume(value) {
+function formatVolume(value, size) {
   let volume_display = (value > 999 || value < -999) ? abbreviate(value, 2) : n(value).format('0')
-  volume_display = z(8, volume_display, ' ')
+  volume_display = z(size, volume_display, ' ')
   if (volume_display.indexOf('.') === -1) volume_display = ' ' + volume_display
   return volume_display
 }
@@ -338,8 +338,8 @@ module.exports = {
       color = getADXColor(s)
       cols.push((' ' + z(2, n(s.period.adx).format('0'), ' '))[color])
 
-      cols.push((formatVolume(s.period.obv)).gray)
-      cols.push((formatVolume(s.period.adosc)).gray)
+      cols.push(formatVolume(s.period.obv, 8).gray)
+      cols.push(formatVolume(s.period.adosc, 9).gray)
     }
 
     return cols
