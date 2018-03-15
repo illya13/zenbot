@@ -70,12 +70,18 @@ function isStochOversold(s) {
   return s.period.stoch.D < s.options.stoch_oversold
 }
 
+function isADXInTrend(s) {
+  return s.period.adx > s.options.adx_threshold
+}
+
 function isUpperHit(s, upperBound) {
-  return isUpper(s, upperBound) && isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) && isBBWWide(s)
+  return isUpper(s, upperBound) && isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
+    isBBWWide(s) && isADXInTrend(s)
 }
 
 function isLowerHit(s, lowerBound) {
-  return isLower(s, lowerBound) && isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) && isBBWWide(s)
+  return isLower(s, lowerBound) && isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) &&
+    isBBWWide(s) && isADXInTrend(s)
 }
 
 function isUptrendNowOrBefore(s, upperBound) {
@@ -189,7 +195,7 @@ function getMACDText(s) {
 }
 
 function getADXColor(s) {
-  if (s.period.adx > s.options.adx_threshold) {
+  if (isADXInTrend(s)) {
     return 'cyan'
   } else {
     return 'grey'
@@ -265,7 +271,7 @@ module.exports = {
     this.option('stoch_oversold', 'Stoch lower band', Number, 30)
 
     this.option('adx_periods', 'number of ADX periods', Number, 14)
-    this.option('adx_threshold', 'adx threshold', Number, 30)
+    this.option('adx_threshold', 'adx threshold', Number, 25)
 
     this.option('chaikin_fast', 'Chaikin fast period', Number, 3)
     this.option('chaikin_slow', 'Chaikin slow period', Number, 10)
@@ -330,11 +336,11 @@ module.exports = {
       color = getCCIColor(s)
       cols.push((' ' + z(4, n(s.period.cci).format('000'), ' '))[color])
 
-      color = getTrendColor(s)
-      cols.push(getTrendText(s)[color])
-
       color = getADXColor(s)
       cols.push((' ' + z(2, n(s.period.adx).format('0'), ' '))[color])
+
+      color = getTrendColor(s)
+      cols.push(getTrendText(s)[color])
 
       cols.push(formatVolume(s.period.obv, 9).gray)
       cols.push(formatVolume(s.period.adosc, 9).gray)
