@@ -84,20 +84,20 @@ function isADOSCNegative(s) {
 
 function isUpperHit(s, upperBound) {
   return isUpper(s, upperBound) && isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
-    isBBWWide(s) && isADXInTrend(s)
+    isADOSCPositive(s) && isMACDPositive(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
 function isLowerHit(s, lowerBound) {
   return isLower(s, lowerBound) && isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) &&
-    isBBWWide(s) && isADXInTrend(s)
+    isADOSCNegative(s) && isMACDNegative() && isBBWWide(s) && isADXInTrend(s)
 }
 
 function isUptrendNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isMACDPositive(s))
+  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isADOSCPositive(s) && isMACDPositive(s))
 }
 
 function isDowntrendNowOrBefore(s, lowerBound) {
-  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isMACDNegative(s))
+  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isADOSCNegative(s) && isMACDNegative())
 }
 
 function updateTrend(s, upperBound, lowerBound) {
@@ -365,14 +365,14 @@ module.exports = {
       color = getADXColor(s)
       cols.push((' ' + z(2, n(s.period.adx).format('0'), ' '))[color])
 
+      color = getADOSCColor(s)
+      cols.push(formatVolume(s.period.adosc, 9)[color])
+
       color = getTrendColor(s)
       cols.push(getTrendText(s)[color])
 
       color = getOBVColor(s)
       cols.push(formatVolume(s.period.obv, 9)[color])
-
-      color = getADOSCColor(s)
-      cols.push(formatVolume(s.period.adosc, 9)[color])
     }
 
     return cols
