@@ -74,6 +74,14 @@ function isADXInTrend(s) {
   return s.period.adx > s.options.adx_threshold
 }
 
+function isADOSCPositive(s) {
+  return s.period.adosc > 0
+}
+
+function isADOSCNegative(s) {
+  return s.period.adosc < 0
+}
+
 function isUpperHit(s, upperBound) {
   return isUpper(s, upperBound) && isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
     isBBWWide(s) && isADXInTrend(s)
@@ -197,6 +205,24 @@ function getMACDText(s) {
 function getADXColor(s) {
   if (isADXInTrend(s)) {
     return 'cyan'
+  } else {
+    return 'grey'
+  }
+}
+
+function getOBVColor(s) {
+  if (s.period.obv > s.lookback[0].obv) {
+    return 'green'
+  } else {
+    return 'red'
+  }
+}
+
+function getADOSCColor(s) {
+  if (isADOSCPositive(s)) {
+    return 'green'
+  } else if (isADOSCNegative(s)) {
+    return 'red'
   } else {
     return 'grey'
   }
@@ -342,8 +368,11 @@ module.exports = {
       color = getTrendColor(s)
       cols.push(getTrendText(s)[color])
 
-      cols.push(formatVolume(s.period.obv, 9).gray)
-      cols.push(formatVolume(s.period.adosc, 9).gray)
+      color = getOBVColor(s)
+      cols.push(formatVolume(s.period.obv, 9)[color])
+
+      color = getADOSCColor(s)
+      cols.push(formatVolume(s.period.adosc, 9)[color])
     }
 
     return cols
