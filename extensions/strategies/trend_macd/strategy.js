@@ -92,18 +92,10 @@ function isLowerHit(s, lowerBound) {
     isADOSCNegative(s) && isMACDNegative(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
-function isUptrendNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isADOSCPositive(s) && isMACDPositive(s))
-}
-
-function isDowntrendNowOrBefore(s, lowerBound) {
-  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isADOSCNegative(s) && isMACDNegative(s))
-}
-
 function updateTrend(s, upperBound, lowerBound) {
-  if (isUptrendNowOrBefore(s, upperBound)) {
+  if (isUpperHit(s, upperBound)) {
     s.period.trend = UPTREND
-  } else if (isDowntrendNowOrBefore(s, lowerBound)) {
+  } else if (isLowerHit(s, lowerBound)) {
     s.period.trend = DOWNTREND
   } else {
     s.period.trend = SIDEWAYS_TREND
