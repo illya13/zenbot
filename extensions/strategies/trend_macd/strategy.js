@@ -83,19 +83,35 @@ function isADOSCNegative(s) {
 }
 
 function isUpperHit(s, upperBound) {
-  return isUpper(s, upperBound) && isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
+  return isUpper(s, upperBound) && isUpperTrend(s)
+}
+
+function isUpperTrend(s) {
+  return isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
     isADOSCPositive(s) && isMACDPositive(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
 function isLowerHit(s, lowerBound) {
-  return isLower(s, lowerBound) && isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) &&
+  return isLower(s, lowerBound) && isLowerTrend(s)
+}
+
+function isLowerTrend(s) {
+  return isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) &&
     isADOSCNegative(s) && isMACDNegative(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
+function isUptrendNowOrBefore(s, upperBound) {
+  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isUpperTrend(s))
+}
+
+function isDowntrendNowOrBefore(s, lowerBound) {
+  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isLowerTrend(s))
+}
+
 function updateTrend(s, upperBound, lowerBound) {
-  if (isUpperHit(s, upperBound)) {
+  if (isUptrendNowOrBefore(s, upperBound)) {
     s.period.trend = UPTREND
-  } else if (isLowerHit(s, lowerBound)) {
+  } else if (isDowntrendNowOrBefore(s, lowerBound)) {
     s.period.trend = DOWNTREND
   } else {
     s.period.trend = SIDEWAYS_TREND
