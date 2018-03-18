@@ -82,17 +82,9 @@ function isADOSCNegative(s) {
   return s.period.adosc < 0
 }
 
-function isUpperHit(s, upperBound) {
-  return isUpper(s, upperBound) && isUpperTrend(s)
-}
-
 function isUpperTrend(s) {
   return isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
     isADOSCPositive(s) && isMACDPositive(s) && isBBWWide(s) && isADXInTrend(s)
-}
-
-function isLowerHit(s, lowerBound) {
-  return isLower(s, lowerBound) && isLowerTrend(s)
 }
 
 function isLowerTrend(s) {
@@ -100,18 +92,18 @@ function isLowerTrend(s) {
     isADOSCNegative(s) && isMACDNegative(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
-function isUptrendNowOrBefore(s, upperBound) {
-  return isUpperHit(s, upperBound) || (lastPeriodTrendEqualsTo(s, UPTREND) && isUpperTrend(s))
+function isUptrendNowOrBefore(s) {
+  return isUpperTrend(s) || (lastPeriodTrendEqualsTo(s, UPTREND) && isUpperTrend(s))
 }
 
-function isDowntrendNowOrBefore(s, lowerBound) {
-  return isLowerHit(s, lowerBound) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isLowerTrend(s))
+function isDowntrendNowOrBefore(s) {
+  return isLowerTrend(s) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isLowerTrend(s))
 }
 
-function updateTrend(s, upperBound, lowerBound) {
-  if (isUptrendNowOrBefore(s, upperBound)) {
+function updateTrend(s) {
+  if (isUptrendNowOrBefore(s)) {
     s.period.trend = UPTREND
-  } else if (isDowntrendNowOrBefore(s, lowerBound)) {
+  } else if (isDowntrendNowOrBefore(s)) {
     s.period.trend = DOWNTREND
   } else {
     s.period.trend = SIDEWAYS_TREND
@@ -259,7 +251,7 @@ function calcIndicators(s) {
         let upperBound = getUpperBound(s)
         let lowerBound = getLowerBound(s)
         bbw(s, upperBound, lowerBound)
-        updateTrend(s, upperBound, lowerBound)
+        updateTrend(s)
       }
     })
 }
@@ -322,10 +314,7 @@ module.exports = {
     calcIndicators(s)
       .then(() => {
         if (isAllSet(s)) {
-          let trendBreak =
-            (periodTrendEqualsTo(s, SIDEWAYS_TREND) && (lastPeriodTrendEqualsTo(s, UPTREND) || lastPeriodTrendEqualsTo(s, DOWNTREND))) ||
-            (periodTrendEqualsTo(s, UPTREND) && lastPeriodTrendEqualsTo(s, DOWNTREND)) ||
-            (periodTrendEqualsTo(s, DOWNTREND) && lastPeriodTrendEqualsTo(s, UPTREND))
+          let trendBreak = s.period.trend && s.lookback[0].trend && s.period.trend !== s.lookback[0].trend
 
           s.signal = null
           if (trendBreak) {
@@ -333,6 +322,10 @@ module.exports = {
               s.signal = 'sell'
             } else if (lastPeriodTrendEqualsTo(s, DOWNTREND)) {
               s.signal = 'buy'
+            } else if (periodTrendEqualsTo(s, UPTREND)) {
+              s.signal = 'buy'
+            } else if (periodTrendEqualsTo(s, DOWNTREND)) {
+              s.signal = 'sell'
             }
           }
         }
