@@ -74,12 +74,23 @@ function isADXInTrend(s) {
   return s.period.adx > s.options.adx_threshold
 }
 
-function isADOSCPositive(s) {
-  return s.period.adosc > 0
+function isADOSCNotChanging(s) {
+  return !s.lookback[0].hit_adosc || adoscPct(s) > -s.options.adosc_threshold
 }
 
-function isADOSCNegative(s) {
-  return s.period.adosc < 0
+function checkAndSetADOSCHit(s) {
+  if (s.period.trend && s.lookback[0].trend && s.lookback[0].trend !== s.period.trend) {
+    s.period.hit_adosc = s.period.adosc
+  } else {
+    s.period.hit_adosc = s.lookback[0].hit_adosc
+  }
+}
+
+function adoscPct(s) {
+  if (!s.lookback[0].hit_adosc) {
+    return 0
+  }
+  return (s.period.adosc - s.lookback[0].hit_adosc) / s.lookback[0].hit_adosc
 }
 
 function isADOSCOverbought(s) {
@@ -92,12 +103,12 @@ function isADOSCOversold(s) {
 
 function isUpperTrend(s) {
   return isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
-    isADOSCPositive(s) && isMACDPositive(s) && isBBWWide(s) && isADXInTrend(s)
+    isADOSCNotChanging(s) && isMACDPositive(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
 function isLowerTrend(s) {
   return isRSIOversold(s) && isCCIOversold(s) && isStochOversold(s) &&
-    isADOSCNegative(s) && isMACDNegative(s) && isBBWWide(s) && isADXInTrend(s)
+    isADOSCNotChanging(s) && isMACDNegative(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
 function isUpperHit(s) {
@@ -119,10 +130,13 @@ function isDowntrendNowOrBefore(s) {
 function updateTrend(s) {
   if (isUptrendNowOrBefore(s)) {
     s.period.trend = UPTREND
+    checkAndSetADOSCHit(s)
   } else if (isDowntrendNowOrBefore(s)) {
     s.period.trend = DOWNTREND
+    checkAndSetADOSCHit(s)
   } else {
     s.period.trend = SIDEWAYS_TREND
+    s.period.hit_adosc = undefined
   }
 }
 
@@ -235,12 +249,22 @@ function getOBVColor(s) {
 }
 
 function getADOSCColor(s) {
-  if (isADOSCPositive(s)) {
+  if (isADOSCOverbought(s)) {
     return 'green'
-  } else if (isADOSCNegative(s)) {
+  } else if (isADOSCOversold(s)) {
     return 'red'
   } else {
     return 'grey'
+  }
+}
+
+function getADOSCPCTColor(s) {
+  if (!s.lookback[0].hit_adosc) {
+    return 'grey'
+  } else if (isADOSCNotChanging(s)) {
+    return 'cyan'
+  } else {
+    return 'red'
   }
 }
 
@@ -249,6 +273,10 @@ function formatVolume(value, size) {
   volume_display = z(size, volume_display, ' ')
   if (volume_display.indexOf('.') === -1) volume_display = ' ' + volume_display
   return volume_display
+}
+
+function pct(ratio) {
+  return (ratio >= 0 ? '+' : '') + n(ratio).format('0%')
 }
 
 function calcIndicators(s) {
@@ -319,6 +347,7 @@ module.exports = {
     this.option('chaikin_slow', 'Chaikin slow period', Number, 10)
     this.option('chaikin_overbought', 'Chaikin overbought', Number, 0)
     this.option('chaikin_oversold', 'Chaikin oversold', Number, 0)
+    this.option('adosc_threshold', 'ADOSC change threshold', Number, 0.5)
   },
 
   calculate: function (s) {
@@ -386,6 +415,9 @@ module.exports = {
 
       color = getADOSCColor(s)
       cols.push(formatVolume(s.period.adosc, 9)[color])
+
+      color = getADOSCPCTColor(s)
+      cols.push(z(6, pct(adoscPct(s)), ' ')[color])
 
       color = getTrendColor(s)
       cols.push(getTrendText(s)[color])
