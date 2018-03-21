@@ -82,6 +82,14 @@ function isADOSCNegative(s) {
   return s.period.adosc < 0
 }
 
+function isADOSCOverbought(s) {
+  return s.period.adosc > s.options.chaikin_overbought
+}
+
+function isADOSCOversold(s) {
+  return s.period.adosc < s.options.chaikin_oversold
+}
+
 function isUpperTrend(s) {
   return isRSIOverbought(s) && isCCIOverbought(s) && isStochOverbought(s) &&
     isADOSCPositive(s) && isMACDPositive(s) && isBBWWide(s) && isADXInTrend(s)
@@ -92,12 +100,20 @@ function isLowerTrend(s) {
     isADOSCNegative(s) && isMACDNegative(s) && isBBWWide(s) && isADXInTrend(s)
 }
 
+function isUpperHit(s) {
+  return isADOSCOverbought(s) && isUpperTrend(s)
+}
+
+function isLowerHit(s) {
+  return isADOSCOversold(s) && isLowerTrend(s)
+}
+
 function isUptrendNowOrBefore(s) {
-  return isUpperTrend(s) || (lastPeriodTrendEqualsTo(s, UPTREND) && isUpperTrend(s))
+  return isUpperHit(s) || (lastPeriodTrendEqualsTo(s, UPTREND) && isUpperTrend(s))
 }
 
 function isDowntrendNowOrBefore(s) {
-  return isLowerTrend(s) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isLowerTrend(s))
+  return isLowerHit(s) || (lastPeriodTrendEqualsTo(s, DOWNTREND) && isLowerTrend(s))
 }
 
 function updateTrend(s) {
@@ -264,7 +280,7 @@ function isAllSet(s) {
 
 
 module.exports = {
-  name: 'trend_macd',
+  name: 'trend_adosc',
   description: 'Buy when (Signal ≤ Lower Bollinger Band && trend up) and sell when (Signal ≥ Upper Bollinger Band && trend down).',
 
   getOptions: function () {
@@ -301,6 +317,8 @@ module.exports = {
 
     this.option('chaikin_fast', 'Chaikin fast period', Number, 3)
     this.option('chaikin_slow', 'Chaikin slow period', Number, 10)
+    this.option('chaikin_overbought', 'Chaikin overbought', Number, 0)
+    this.option('chaikin_oversold', 'Chaikin oversold', Number, 0)
   },
 
   calculate: function (s) {
