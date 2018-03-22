@@ -94,11 +94,13 @@ function adoscPct(s) {
 }
 
 function isADOSCOverbought(s) {
-  return s.period.adosc > s.options.chaikin_overbought
+  return s.period.adosc && s.lookback[0].adosc && (s.period.adosc > s.lookback[0].adosc) &&
+    (s.period.adosc > s.options.chaikin_overbought)
 }
 
 function isADOSCOversold(s) {
-  return s.period.adosc < s.options.chaikin_oversold
+  return s.period.adosc && s.lookback[0].adosc && (s.period.adosc < s.lookback[0].adosc) &&
+    (s.period.adosc < s.options.chaikin_oversold)
 }
 
 function isUpperTrend(s) {
