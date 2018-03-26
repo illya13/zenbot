@@ -93,14 +93,14 @@ function adoscPct(s) {
   return (s.period.adosc - s.lookback[0].hit_adosc) / s.lookback[0].hit_adosc
 }
 
-function isADOSCOverbought(s) {
+function isADOSCPositive(s) {
   return s.period.adosc && s.lookback[0].adosc && (s.period.adosc > s.lookback[0].adosc) &&
-    (s.period.adosc > s.options.chaikin_overbought)
+    (s.period.adosc > 0)
 }
 
-function isADOSCOversold(s) {
+function isADOSCNegative(s) {
   return s.period.adosc && s.lookback[0].adosc && (s.period.adosc < s.lookback[0].adosc) &&
-    (s.period.adosc < s.options.chaikin_oversold)
+    (s.period.adosc < 0)
 }
 
 function isUpperTrend(s) {
@@ -114,11 +114,11 @@ function isLowerTrend(s) {
 }
 
 function isUpperHit(s) {
-  return isADOSCOverbought(s) && isUpperTrend(s)
+  return isADOSCPositive(s) && isUpperTrend(s)
 }
 
 function isLowerHit(s) {
-  return isADOSCOversold(s) && isLowerTrend(s)
+  return isADOSCNegative(s) && isLowerTrend(s)
 }
 
 function isUptrendNowOrBefore(s) {
@@ -251,9 +251,9 @@ function getOBVColor(s) {
 }
 
 function getADOSCColor(s) {
-  if (isADOSCOverbought(s)) {
+  if (isADOSCPositive(s)) {
     return 'green'
-  } else if (isADOSCOversold(s)) {
+  } else if (isADOSCNegative(s)) {
     return 'red'
   } else {
     return 'grey'
@@ -347,8 +347,6 @@ module.exports = {
 
     this.option('chaikin_fast', 'Chaikin fast period', Number, 3)
     this.option('chaikin_slow', 'Chaikin slow period', Number, 10)
-    this.option('chaikin_overbought', 'Chaikin overbought', Number, 0)
-    this.option('chaikin_oversold', 'Chaikin oversold', Number, 0)
     this.option('adosc_threshold', 'ADOSC change threshold', Number, 0.5)
   },
 
