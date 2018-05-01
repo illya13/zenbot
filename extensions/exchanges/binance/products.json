@@ -2978,5 +2978,75 @@
     "increment": "0.00000001",
     "asset_increment": "1.",
     "label": "GRS/ETH"
+  },
+  {
+    "id": "ADAUSDT",
+    "asset": "ADA",
+    "currency": "USDT",
+    "min_size": "0.01000000",
+    "max_size": "100000.00000000",
+    "increment": "0.00001",
+    "asset_increment": "0.01",
+    "label": "ADA/USDT"
+  },
+  {
+    "id": "ADABNB",
+    "asset": "ADA",
+    "currency": "BNB",
+    "min_size": "0.01000000",
+    "max_size": "10000.00000000",
+    "increment": "0.00001",
+    "asset_increment": "0.01",
+    "label": "ADA/BNB"
+  },
+  {
+    "id": "CLOAKBTC",
+    "asset": "CLOAK",
+    "currency": "BTC",
+    "min_size": "0.01000000",
+    "max_size": "100000.00000000",
+    "increment": "0.0000001",
+    "asset_increment": "0.01",
+    "label": "CLOAK/BTC"
+  },
+  {
+    "id": "CLOAKETH",
+    "asset": "CLOAK",
+    "currency": "ETH",
+    "min_size": "0.01000000",
+    "max_size": "100000.00000000",
+    "increment": "0.000001",
+    "asset_increment": "0.01",
+    "label": "CLOAK/ETH"
+  },
+  {
+    "id": "GNTBTC",
+    "asset": "GNT",
+    "currency": "BTC",
+    "min_size": "1.00000000",
+    "max_size": "100000.00000000",
+    "increment": "0.00000001",
+    "asset_increment": "1.",
+    "label": "GNT/BTC"
+  },
+  {
+    "id": "GNTETH",
+    "asset": "GNT",
+    "currency": "ETH",
+    "min_size": "1.00000000",
+    "max_size": "100000.00000000",
+    "increment": "0.00000001",
+    "asset_increment": "1.",
+    "label": "GNT/ETH"
+  },
+  {
+    "id": "GNTBNB",
+    "asset": "GNT",
+    "currency": "BNB",
+    "min_size": "0.01000000",
+    "max_size": "10000.00000000",
+    "increment": "0.00001",
+    "asset_increment": "0.01",
+    "label": "GNT/BNB"
   }
 ]
